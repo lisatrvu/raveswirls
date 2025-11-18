@@ -21,8 +21,8 @@ function setup() {
   }, { passive: false });
 
   // Create particles to fill the screen
-  let particleDensity = 0.8; // particles per 100 pixels
-  let numParticles = Math.max(100, (width * height / 10000) * particleDensity);
+  let particleDensity = 0.8;
+  let numParticles = Math.max(150, (width * height / 10000) * particleDensity);
   
   for (let i = 0; i < numParticles; i++) {
     particles.push({
@@ -30,29 +30,19 @@ function setup() {
       y: random(height),
       vx: random(-0.5, 0.5),
       vy: random(-0.5, 0.5),
-      size: random(15, 35),
-      hueOffset: random(0, 360),
-      angle: random(TWO_PI),
-      swirlSpeed: random(0.01, 0.03),
-      baseRadius: random(50, 150)
+      size: random(20, 40),
+      hueOffset: random(0, 360)
     });
   }
-
 }
 
 function draw() {
-  // Fade background slightly for trailing effect
-  fill(0, 0, 0, 8);
+  // Fade background for trailing effect (very subtle)
+  fill(0, 0, 0, 3);
   rect(0, 0, width, height);
-
-  // Time-based animation variation
-  let ampLevel = sin(frameCount * 0.02) * 50 + 50;
 
   // Update and draw particles
   for (let p of particles) {
-    // Base swirling motion
-    p.angle += p.swirlSpeed;
-    
     // Mouse/touch interaction - create swirl effect when dragging
     if (isDragging) {
       // Use touch position if available, otherwise mouse position
@@ -94,8 +84,8 @@ function draw() {
     
     // Calculate color based on position and time
     let hue = (hueBase + p.hueOffset + p.x * 0.1 + p.y * 0.1) % 360;
-    let brightness = 80 + ampLevel * 0.2 + sin(frameCount * 0.01 + p.hueOffset) * 15;
-    let size = p.size + ampLevel * 0.15 + sin(frameCount * 0.02 + p.hueOffset * 0.1) * 5;
+    let brightness = 90 + sin(frameCount * 0.01 + p.hueOffset) * 10;
+    let size = p.size + sin(frameCount * 0.02 + p.hueOffset * 0.1) * 5;
     
     fill(hue, 100, brightness, 100);
     ellipse(p.x, p.y, size);
@@ -159,7 +149,7 @@ function windowResized() {
   
   // Adjust particles for new screen size
   let particleDensity = 0.8;
-  let numParticles = (width * height / 10000) * particleDensity;
+  let numParticles = Math.max(150, (width * height / 10000) * particleDensity);
   
   // Add or remove particles as needed
   while (particles.length < numParticles) {
@@ -168,11 +158,8 @@ function windowResized() {
       y: random(height),
       vx: random(-0.5, 0.5),
       vy: random(-0.5, 0.5),
-      size: random(15, 35),
-      hueOffset: random(0, 360),
-      angle: random(TWO_PI),
-      swirlSpeed: random(0.01, 0.03),
-      baseRadius: random(50, 150)
+      size: random(20, 40),
+      hueOffset: random(0, 360)
     });
   }
   
