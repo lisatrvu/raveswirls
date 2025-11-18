@@ -21,8 +21,8 @@ function setup() {
   }, { passive: false });
 
   // Create particles to fill the screen
-  let particleDensity = 0.8;
-  let numParticles = Math.max(150, (width * height / 10000) * particleDensity);
+  let particleDensity = 1.2;
+  let numParticles = Math.max(200, (width * height / 10000) * particleDensity);
   
   for (let i = 0; i < numParticles; i++) {
     particles.push({
@@ -30,15 +30,15 @@ function setup() {
       y: random(height),
       vx: random(-0.5, 0.5),
       vy: random(-0.5, 0.5),
-      size: random(20, 40),
+      size: random(25, 45),
       hueOffset: random(0, 360)
     });
   }
 }
 
 function draw() {
-  // Fade background for trailing effect (very subtle)
-  fill(0, 0, 0, 3);
+  // Fade background for trailing effect (very subtle - comment out to test)
+  fill(0, 0, 0, 2);
   rect(0, 0, width, height);
 
   // Update and draw particles
@@ -158,7 +158,7 @@ function windowResized() {
       y: random(height),
       vx: random(-0.5, 0.5),
       vy: random(-0.5, 0.5),
-      size: random(20, 40),
+      size: random(25, 45),
       hueOffset: random(0, 360)
     });
   }
