@@ -1,12 +1,8 @@
 let particles = [];
 let hueBase = 0;
-let mouseForce = { x: 0, y: 0 };
 let mousePos = { x: 0, y: 0 };
 let isDragging = false;
 let touchPos = { x: 0, y: 0 };
-
-let mic, ampLevel = 0;
-let micEnabled = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -26,7 +22,7 @@ function setup() {
 
   // Create particles to fill the screen
   let particleDensity = 0.8; // particles per 100 pixels
-  let numParticles = (width * height / 10000) * particleDensity;
+  let numParticles = Math.max(100, (width * height / 10000) * particleDensity);
   
   for (let i = 0; i < numParticles; i++) {
     particles.push({
@@ -42,15 +38,6 @@ function setup() {
     });
   }
 
-  // Setup mic input (with error handling for mobile)
-  try {
-    mic = new p5.AudioIn();
-    mic.start();
-    micEnabled = true;
-  } catch (e) {
-    console.log('Mic not available:', e);
-    micEnabled = false;
-  }
 }
 
 function draw() {
@@ -58,18 +45,8 @@ function draw() {
   fill(0, 0, 0, 8);
   rect(0, 0, width, height);
 
-  // Get live mic level (if available)
-  if (micEnabled && mic) {
-    try {
-      let level = mic.getLevel();
-      ampLevel = lerp(ampLevel, level * 2000, 0.1);
-    } catch (e) {
-      ampLevel = lerp(ampLevel, 0, 0.1);
-    }
-  } else {
-    // Use time-based variation if no mic
-    ampLevel = sin(frameCount * 0.02) * 50 + 50;
-  }
+  // Time-based animation variation
+  let ampLevel = sin(frameCount * 0.02) * 50 + 50;
 
   // Update and draw particles
   for (let p of particles) {
@@ -117,10 +94,10 @@ function draw() {
     
     // Calculate color based on position and time
     let hue = (hueBase + p.hueOffset + p.x * 0.1 + p.y * 0.1) % 360;
-    let brightness = 70 + ampLevel * 0.3 + sin(frameCount * 0.01 + p.hueOffset) * 10;
-    let size = p.size + ampLevel * 0.2 + sin(frameCount * 0.02 + p.hueOffset * 0.1) * 3;
+    let brightness = 80 + ampLevel * 0.2 + sin(frameCount * 0.01 + p.hueOffset) * 15;
+    let size = p.size + ampLevel * 0.15 + sin(frameCount * 0.02 + p.hueOffset * 0.1) * 5;
     
-    fill(hue, 100, brightness, 90);
+    fill(hue, 100, brightness, 100);
     ellipse(p.x, p.y, size);
   }
 
@@ -134,11 +111,6 @@ function mousePressed() {
   mousePos.y = mouseY;
   touchPos.x = mouseX;
   touchPos.y = mouseY;
-  try {
-    getAudioContext().resume();
-  } catch (e) {
-    console.log('Audio context issue:', e);
-  }
 }
 
 function mouseDragged() {
@@ -161,11 +133,6 @@ function touchStarted() {
     touchPos.y = touches[0].y;
     mousePos.x = touches[0].x;
     mousePos.y = touches[0].y;
-  }
-  try {
-    getAudioContext().resume();
-  } catch (e) {
-    console.log('Audio context issue:', e);
   }
   return false; // Prevent default
 }
