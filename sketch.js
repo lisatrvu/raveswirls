@@ -3,14 +3,26 @@ let hueBase = 0;
 let mouseForce = { x: 0, y: 0 };
 let mousePos = { x: 0, y: 0 };
 let isDragging = false;
+let touchPos = { x: 0, y: 0 };
 
 let mic, ampLevel = 0;
+let micEnabled = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB, 360, 100, 100, 100);
   background(0);
   noStroke();
+
+  // Prevent default touch behaviors on mobile
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+  }, { passive: false });
 
   // Create particles to fill the screen
   let particleDensity = 0.8; // particles per 100 pixels
@@ -30,9 +42,15 @@ function setup() {
     });
   }
 
-  // Setup mic input
-  mic = new p5.AudioIn();
-  mic.start();
+  // Setup mic input (with error handling for mobile)
+  try {
+    mic = new p5.AudioIn();
+    mic.start();
+    micEnabled = true;
+  } catch (e) {
+    console.log('Mic not available:', e);
+    micEnabled = false;
+  }
 }
 
 function draw() {
@@ -40,26 +58,39 @@ function draw() {
   fill(0, 0, 0, 8);
   rect(0, 0, width, height);
 
-  // Get live mic level
-  let level = mic.getLevel();
-  ampLevel = lerp(ampLevel, level * 2000, 0.1);
+  // Get live mic level (if available)
+  if (micEnabled && mic) {
+    try {
+      let level = mic.getLevel();
+      ampLevel = lerp(ampLevel, level * 2000, 0.1);
+    } catch (e) {
+      ampLevel = lerp(ampLevel, 0, 0.1);
+    }
+  } else {
+    // Use time-based variation if no mic
+    ampLevel = sin(frameCount * 0.02) * 50 + 50;
+  }
 
   // Update and draw particles
   for (let p of particles) {
     // Base swirling motion
     p.angle += p.swirlSpeed;
     
-    // Mouse interaction - create swirl effect when dragging
+    // Mouse/touch interaction - create swirl effect when dragging
     if (isDragging) {
-      let dx = p.x - mousePos.x;
-      let dy = p.y - mousePos.y;
+      // Use touch position if available, otherwise mouse position
+      let interactionX = touchPos.x || mousePos.x;
+      let interactionY = touchPos.y || mousePos.y;
+      
+      let dx = p.x - interactionX;
+      let dy = p.y - interactionY;
       let dist = sqrt(dx * dx + dy * dy);
       let maxDist = 200; // interaction radius
       
       if (dist < maxDist && dist > 0) {
-        // Create swirling force around mouse
+        // Create swirling force around touch/mouse
         let angle = atan2(dy, dx);
-        let force = (1 - dist / maxDist) * 0.5; // stronger closer to mouse
+        let force = (1 - dist / maxDist) * 0.5; // stronger closer to touch
         
         // Perpendicular force for swirl effect
         let perpAngle = angle + PI / 2;
@@ -101,13 +132,21 @@ function mousePressed() {
   isDragging = true;
   mousePos.x = mouseX;
   mousePos.y = mouseY;
-  getAudioContext().resume();
+  touchPos.x = mouseX;
+  touchPos.y = mouseY;
+  try {
+    getAudioContext().resume();
+  } catch (e) {
+    console.log('Audio context issue:', e);
+  }
 }
 
 function mouseDragged() {
   isDragging = true;
   mousePos.x = mouseX;
   mousePos.y = mouseY;
+  touchPos.x = mouseX;
+  touchPos.y = mouseY;
 }
 
 function mouseReleased() {
@@ -116,17 +155,31 @@ function mouseReleased() {
 
 function touchStarted() {
   isDragging = true;
-  mousePos.x = touchX || mouseX;
-  mousePos.y = touchY || mouseY;
-  getAudioContext().resume();
-  return false;
+  // Use first touch point
+  if (touches.length > 0) {
+    touchPos.x = touches[0].x;
+    touchPos.y = touches[0].y;
+    mousePos.x = touches[0].x;
+    mousePos.y = touches[0].y;
+  }
+  try {
+    getAudioContext().resume();
+  } catch (e) {
+    console.log('Audio context issue:', e);
+  }
+  return false; // Prevent default
 }
 
 function touchMoved() {
   isDragging = true;
-  mousePos.x = touchX || mouseX;
-  mousePos.y = touchY || mouseY;
-  return false;
+  // Use first touch point
+  if (touches.length > 0) {
+    touchPos.x = touches[0].x;
+    touchPos.y = touches[0].y;
+    mousePos.x = touches[0].x;
+    mousePos.y = touches[0].y;
+  }
+  return false; // Prevent scrolling
 }
 
 function touchEnded() {
