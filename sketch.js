@@ -3,12 +3,17 @@ let hueBase = 0;
 let mousePos = { x: 0, y: 0 };
 let isDragging = false;
 let touchPos = { x: 0, y: 0 };
+let showInstructions = true;
+let instructionAlpha = 255;
+let hasInteracted = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB, 360, 100, 100, 100);
   background(0);
   noStroke();
+  textAlign(CENTER, CENTER);
+  textSize(min(width, height) * 0.06);
 
   // Prevent default touch behaviors on mobile
   document.addEventListener('touchstart', function(e) {
@@ -41,6 +46,9 @@ function draw() {
   fill(0, 0, 0, 2);
   rect(0, 0, width, height);
 
+  // Detect if mobile device
+  let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
   // Update and draw particles
   for (let p of particles) {
     // Mouse/touch interaction - create swirl effect when dragging
@@ -52,12 +60,15 @@ function draw() {
       let dx = p.x - interactionX;
       let dy = p.y - interactionY;
       let dist = sqrt(dx * dx + dy * dy);
-      let maxDist = 200; // interaction radius
+      
+      // Larger interaction radius and stronger force on mobile
+      let maxDist = isMobile ? 300 : 200; // interaction radius
+      let forceMultiplier = isMobile ? 1.5 : 1.0; // stronger on mobile
       
       if (dist < maxDist && dist > 0) {
         // Create swirling force around touch/mouse
         let angle = atan2(dy, dx);
-        let force = (1 - dist / maxDist) * 0.5; // stronger closer to touch
+        let force = (1 - dist / maxDist) * 0.7 * forceMultiplier; // stronger closer to touch
         
         // Perpendicular force for swirl effect
         let perpAngle = angle + PI / 2;
@@ -65,16 +76,17 @@ function draw() {
         p.vy += sin(perpAngle) * force;
         
         // Also push away slightly
-        p.vx += cos(angle) * force * 0.3;
-        p.vy += sin(angle) * force * 0.3;
+        p.vx += cos(angle) * force * 0.4;
+        p.vy += sin(angle) * force * 0.4;
       }
     }
     
-    // Apply velocity with damping
+    // Apply velocity with damping (less damping on mobile for more reactivity)
+    let damping = isMobile ? 0.985 : 0.98; // less damping = more reactive
     p.x += p.vx;
     p.y += p.vy;
-    p.vx *= 0.98;
-    p.vy *= 0.98;
+    p.vx *= damping;
+    p.vy *= damping;
     
     // Wrap around screen edges
     if (p.x < 0) p.x = width;
@@ -93,9 +105,26 @@ function draw() {
 
   // Rotate color base
   hueBase = (hueBase + 0.5) % 360;
+  
+  // Show instructions
+  if (showInstructions && instructionAlpha > 0) {
+    fill(0, 0, 100, instructionAlpha);
+    textSize(min(width, height) * 0.06);
+    text("✨ Drag to create swirling colors ✨", width / 2, height / 2 - 40);
+    textSize(min(width, height) * 0.04);
+    text("Touch and move your finger across the screen", width / 2, height / 2 + 20);
+    
+    if (hasInteracted) {
+      instructionAlpha -= 5;
+      if (instructionAlpha <= 0) {
+        showInstructions = false;
+      }
+    }
+  }
 }
 
 function mousePressed() {
+  hasInteracted = true;
   isDragging = true;
   mousePos.x = mouseX;
   mousePos.y = mouseY;
@@ -116,6 +145,7 @@ function mouseReleased() {
 }
 
 function touchStarted() {
+  hasInteracted = true;
   isDragging = true;
   // Use first touch point
   if (touches.length > 0) {
