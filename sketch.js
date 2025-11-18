@@ -108,7 +108,8 @@ function draw() {
   
   // Show instructions
   if (showInstructions && instructionAlpha > 0) {
-    fill(0, 0, 100, instructionAlpha);
+    // Convert HSB to RGB for text (white text)
+    fill(0, 0, 100, instructionAlpha / 255 * 100);
     textSize(min(width, height) * 0.06);
     text("✨ Drag to create swirling colors ✨", width / 2, height / 2 - 40);
     textSize(min(width, height) * 0.04);
